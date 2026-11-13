@@ -2,7 +2,7 @@
 
 | Campo | Valore |
 |---|---|
-| Stato | `bozza` |
+| Stato | `approvato` |
 | Tipo | `chore` |
 | Aree | `web` · `mobile` · `db` |
 | Feature README | — (prerequisito di F1–F8) |
