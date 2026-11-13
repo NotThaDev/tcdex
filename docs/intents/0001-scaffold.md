@@ -2,7 +2,7 @@
 
 | Campo | Valore |
 |---|---|
-| Stato | `approvato` |
+| Stato | `in sviluppo` |
 | Tipo | `chore` |
 | Aree | `web` · `mobile` · `db` |
 | Feature README | — (prerequisito di F1–F8) |
@@ -19,8 +19,8 @@ Non cambia niente per l'utente finale: si avviano app vuote con la struttura des
 
 **Incluso**
 - `supabase/`: `supabase init`, migration `collection` (tabella, indice, RLS, trigger `updated_at`) come da skill `supabase-backend`, `seed.sql` vuoto, test pgTAP RLS.
-- `web/`: progetto Nuxt 4 con **bun**, moduli `@nuxtjs/supabase`, `@nuxtjs/i18n` (it/en), `@pinia/nuxt`, `@nuxt/eslint`, `@nuxt/image`, `@nuxt/test-utils`; TypeScript strict; una pagina `index.vue` placeholder tradotta; `.env.example`; un test unitario Vitest di esempio; `database.types.ts` generato.
-- `mobile/`: progetto Flutter (`com.notthadev.tcdex`, Android + iOS) con le dipendenze della skill `flutter-mobile`, `very_good_analysis`, `main.dart` + `app/app.dart` + `app/router.dart` + `core/env.dart`, l10n it/en con una schermata placeholder, `env/dev.example.json`, un widget test.
+- `web/`: progetto Nuxt 4 con **bun**, moduli `@nuxtjs/supabase`, `@nuxtjs/i18n` (it/en), `@nuxt/eslint`, `@nuxt/test-utils` (`@pinia/nuxt` e `@nuxt/image` arrivano con F1, quando servono); TypeScript strict; una pagina `index.vue` placeholder tradotta; `.env.example`; un test unitario Vitest di esempio; `database.types.ts` generato.
+- `mobile/`: progetto Flutter (`com.notthadev.tcdex`, Android + iOS) con le sole dipendenze usate dallo scaffold (flutter_riverpod, riverpod_annotation/generator, build_runner, go_router, supabase_flutter, flutter_localizations, intl, very_good_analysis; dio/freezed/cached_network_image/mocktail arrivano con F1), `main.dart` + `app/app.dart` + `app/router.dart` + `core/env.dart`, l10n it/en con una schermata placeholder, `env/dev.example.json`, un widget test.
 - CI GitHub Actions: un workflow con tre job (db, web, mobile) che eseguono i comandi di qualità del README.
 
 **Escluso**
@@ -35,7 +35,7 @@ Non cambia niente per l'utente finale: si avviano app vuote con la struttura des
 - [ ] AC2 — Dato `web/.env` compilato dall'esempio, quando eseguo `bun run lint && bun run typecheck && bun run test && bun run build` in `web/`, allora tutti i comandi passano.
 - [ ] AC3 — Quando apro `http://localhost:3000` e `/en` con `bun run dev`, allora vedo il testo placeholder rispettivamente in italiano e in inglese, senza errori in console.
 - [ ] AC4 — Quando eseguo `dart format --set-exit-if-changed . && flutter analyze && flutter test` in `mobile/`, allora tutti i comandi passano.
-- [ ] AC5 — Quando avvio l'app su emulatore con `flutter run --dart-define-from-file=env/dev.json`, allora vedo la schermata placeholder localizzata e Supabase si inizializza senza errori.
+- [ ] AC5 — Quando avvio l'app su emulatore con `flutter run --dart-define-from-file=env/dev.json`, allora vedo la schermata placeholder localizzata e Supabase si inizializza senza errori. (Prova manuale; su emulatore Android l'URL locale è `http://10.0.2.2:54321`.)
 - [ ] AC6 — Quando apro una PR, allora la CI esegue i tre job e sono verdi.
 
 ## 4. Design tecnico
@@ -59,15 +59,16 @@ Non cambia niente per l'utente finale: si avviano app vuote con la struttura des
 ## 6. Piano
 | # | Passo | Area | Modello | Fatto |
 |---|---|---|---|---|
-| 1 | `supabase init`, migration `collection`, test pgTAP, `db reset` + `test db` verdi | db | Haiku | ☐ |
-| 2 | Scaffold Nuxt 4 con bun, moduli, config, i18n, pagina placeholder, test unitario, `.env.example`, tipi generati; comandi qualità verdi | web | Haiku | ☐ |
-| 3 | Scaffold Flutter, dipendenze, struttura, l10n, placeholder, widget test, `env/dev.example.json`; comandi qualità verdi | mobile | Haiku | ☐ |
-| 4 | Workflow `.github/workflows/ci.yml` con job db/web/mobile | repo | Haiku | ☐ |
-| 5 | Aggiorna README (tabella setup con bun, rimuove riferimenti a pnpm) | docs | Haiku | ☐ |
+| 1 | `.gitignore` completo (env, `.nuxt`, `.output`, `.dart_tool`, `build/`, `supabase/.temp`); `supabase init`, migration `collection`, `seed.sql` vuoto, test pgTAP della skill; `db reset` + `test db` verdi; Supabase resta avviato | db | Haiku | ☐ |
+| 2 | Nuxt 4 con bun. Script: `postinstall`/`lint`/`typecheck` preceduti da `nuxt prepare`, `test: vitest run`; `typeCheck: false` in config (typecheck solo da script); `supabase.redirect: false` fino a F5; `.env.example` con valori locali; `vitest.config.ts` con `defineVitestConfig`; test su una util pura; `database.types.ts` generato e committato. Niente Playwright, store, pagine oltre `index.vue` | web | Haiku | ☐ |
+| 3 | `flutter create --org com.notthadev --project-name tcdex --platforms android,ios mobile`; deps minime; `analysis_options` con very_good_analysis (esclusi file generati, `public_member_api_docs: false`); l10n in `lib/l10n`; `router.dart` con un provider `@riverpod`; widget test su `App` senza `Supabase.initialize`; `env/dev.example.json` | mobile | Haiku | ☐ |
+| 4 | `.github/workflows/ci.yml`: db (`supabase/setup-cli`, start, reset, test), web (`setup-bun` 1.3.8, `.env` fittizio, 4 comandi), mobile (`flutter-action` stable, pub get, build_runner, 3 comandi); `permissions: contents: read`, `concurrency` | repo | Haiku | ☐ |
+| 5 | README: albero `mobile/lib/l10n`, setup con bun, nota URL emulatore Android | docs | Haiku | ☐ |
 
-I passi 2 e 3 sono indipendenti e possono andare in parallelo dopo il passo 1.
+I passi 2 e 3 vanno in parallelo dopo il passo 1. Commit per passo: `chore(db)`, `chore(web)`, `chore(mobile)`, `chore(repo)`, `docs`.
+AC3 e AC5 si provano nella verifica (browser / manuale); AC6 alla prima esecuzione della CI sulla PR.
 
-Validazione del piano (Sonnet): ☐ OK · note: …
+Validazione del piano (Sonnet): ☑ OK con modifiche · note: script e config Nuxt resi espliciti, deps ridotte (YAGNI), `.gitignore` anticipato, AC3/AC5/AC6 assegnati alla verifica.
 
 ---
 
