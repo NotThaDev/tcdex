@@ -75,8 +75,9 @@ pokedex-tcg/
     ├── lib/
     │   ├── app/
     │   ├── core/
-    │   └── features/<feature>/{data,domain,presentation}/
-    ├── l10n/
+    │   ├── features/<feature>/{data,domain,presentation}/
+    │   └── l10n/                 # file ARB it/en
+    ├── env/dev.example.json
     └── test/
 ```
 
@@ -140,6 +141,7 @@ bun run dev                       # http://localhost:3000
 cd mobile
 flutter pub get
 dart run build_runner build -d
+cp env/dev.example.json env/dev.json  # poi inserisci la chiave
 flutter run --dart-define-from-file=env/dev.json
 ```
 
@@ -151,7 +153,9 @@ flutter run --dart-define-from-file=env/dev.json
 | web/.env | `SUPABASE_SECRET_KEY` | solo se una server route deve bypassare RLS; mai esposta al client |
 | mobile/env/*.json | `SUPABASE_URL`, `SUPABASE_KEY` | passate con `--dart-define-from-file`; file in `.gitignore` |
 
-Nessun segreto va committato. Nel repo c'è solo `*.example`.
+Nessun segreto va committato. Gli unici file env nel repo sono `web/.env.example` e `mobile/env/dev.example.json`: copiali in `web/.env` e `mobile/env/dev.json` e inserisci la chiave publishable da `supabase status`.
+
+Su emulatore Android `127.0.0.1` punta all'emulatore stesso: in `mobile/env/dev.json` usa `SUPABASE_URL=http://10.0.2.2:54321`. Su simulatore iOS va bene `http://127.0.0.1:54321`.
 
 ---
 

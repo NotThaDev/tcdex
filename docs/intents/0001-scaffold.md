@@ -2,7 +2,7 @@
 
 | Campo | Valore |
 |---|---|
-| Stato | `in sviluppo` |
+| Stato | `in review` |
 | Tipo | `chore` |
 | Aree | `web` · `mobile` · `db` |
 | Feature README | — (prerequisito di F1–F8) |
@@ -59,11 +59,11 @@ Non cambia niente per l'utente finale: si avviano app vuote con la struttura des
 ## 6. Piano
 | # | Passo | Area | Modello | Fatto |
 |---|---|---|---|---|
-| 1 | `.gitignore` completo (env, `.nuxt`, `.output`, `.dart_tool`, `build/`, `supabase/.temp`); `supabase init`, migration `collection`, `seed.sql` vuoto, test pgTAP della skill; `db reset` + `test db` verdi; Supabase resta avviato | db | Haiku | ☐ |
-| 2 | Nuxt 4 con bun. Script: `postinstall`/`lint`/`typecheck` preceduti da `nuxt prepare`, `test: vitest run`; `typeCheck: false` in config (typecheck solo da script); `supabase.redirect: false` fino a F5; `.env.example` con valori locali; `vitest.config.ts` con `defineVitestConfig`; test su una util pura; `database.types.ts` generato e committato. Niente Playwright, store, pagine oltre `index.vue` | web | Haiku | ☐ |
-| 3 | `flutter create --org com.notthadev --project-name tcdex --platforms android,ios mobile`; deps minime; `analysis_options` con very_good_analysis (esclusi file generati, `public_member_api_docs: false`); l10n in `lib/l10n`; `router.dart` con un provider `@riverpod`; widget test su `App` senza `Supabase.initialize`; `env/dev.example.json` | mobile | Haiku | ☐ |
-| 4 | `.github/workflows/ci.yml`: db (`supabase/setup-cli`, start, reset, test), web (`setup-bun` 1.3.8, `.env` fittizio, 4 comandi), mobile (`flutter-action` stable, pub get, build_runner, 3 comandi); `permissions: contents: read`, `concurrency` | repo | Haiku | ☐ |
-| 5 | README: albero `mobile/lib/l10n`, setup con bun, nota URL emulatore Android | docs | Haiku | ☐ |
+| 1 | `.gitignore` completo (env, `.nuxt`, `.output`, `.dart_tool`, `build/`, `supabase/.temp`); `supabase init`, migration `collection`, `seed.sql` vuoto, test pgTAP della skill; `db reset` + `test db` verdi; Supabase resta avviato | db | Haiku || ☑ |
+| 2 | Nuxt 4 con bun. Script: `postinstall`/`lint`/`typecheck` preceduti da `nuxt prepare`, `test: vitest run`; `typeCheck: false` in config (typecheck solo da script); `supabase.redirect: false` fino a F5; `.env.example` con valori locali; `vitest.config.ts` con `defineVitestConfig`; test su una util pura; `database.types.ts` generato e committato. Niente Playwright, store, pagine oltre `index.vue` | web | Haiku || ☑ |
+| 3 | `flutter create --org com.notthadev --project-name tcdex --platforms android,ios mobile`; deps minime; `analysis_options` con very_good_analysis (esclusi file generati, `public_member_api_docs: false`); l10n in `lib/l10n`; `router.dart` con un provider `@riverpod`; widget test su `App` senza `Supabase.initialize`; `env/dev.example.json` | mobile | Haiku || ☑ |
+| 4 | `.github/workflows/ci.yml`: db (`supabase/setup-cli`, start, reset, test), web (`setup-bun` 1.3.8, `.env` fittizio, 4 comandi), mobile (`flutter-action` stable, pub get, build_runner, 3 comandi); `permissions: contents: read`, `concurrency` | repo | Haiku || ☑ |
+| 5 | README: albero `mobile/lib/l10n`, setup con bun, nota URL emulatore Android | docs | Haiku || ☑ |
 
 I passi 2 e 3 vanno in parallelo dopo il passo 1. Commit per passo: `chore(db)`, `chore(web)`, `chore(mobile)`, `chore(repo)`, `docs`.
 AC3 e AC5 si provano nella verifica (browser / manuale); AC6 alla prima esecuzione della CI sulla PR.
@@ -76,15 +76,15 @@ Validazione del piano (Sonnet): ☑ OK con modifiche · note: script e config Nu
 
 | Controllo | Comando / azione | Esito |
 |---|---|---|
-| DB | `supabase db reset && supabase test db` | ☐ |
-| Web | `bun run lint && bun run typecheck && bun run test && bun run build` | ☐ |
-| Mobile | `dart format --set-exit-if-changed . && flutter analyze && flutter test` | ☐ |
-| Prova browser | AC3 | ☐ |
-| Prova mobile | AC5 | ☐ |
+| DB | `supabase db reset && supabase test db` | ☑ 3/3 |
+| Web | `bun run lint && bun run typecheck && bun run test && bun run build` | ☑ (2 test) |
+| Mobile | `dart format --set-exit-if-changed . && flutter analyze && flutter test` | ☑ (2 test) |
+| Prova browser | AC3 | ☑ `/` → "Catalogo in arrivo", `/en` → "Catalog coming soon", nessun errore in console |
+| Prova mobile | AC5 | ☐ prova manuale in review |
 
-Note, screenshot, problemi trovati:
+Note, screenshot, problemi trovati: Node 25.5 locale fuori dal range supportato da Nuxt (warning, non bloccante). AC6 da confermare alla prima CI della PR.
 
 ## 8. Esito
-- Cosa è stato fatto davvero (differenze rispetto al piano):
-- Debito tecnico lasciato (con TODO o issue collegata):
-- Follow-up:
+- Cosa è stato fatto davvero (differenze rispetto al piano): come da piano. TypeScript fissato a `~5.9` nel web (la 7.x rompe typescript-eslint e `nuxt typecheck`). l10n mobile in `lib/l10n`.
+- Debito tecnico lasciato (con TODO o issue collegata): sbloccare TypeScript 7 quando typescript-eslint/vue-tsc lo supportano.
+- Follow-up: F1 (catalogo) con `@pinia/nuxt`, `@nuxt/image`, Playwright, dio/freezed.
