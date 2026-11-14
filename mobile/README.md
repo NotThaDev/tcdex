@@ -1,17 +1,17 @@
 # tcdex
 
-A new Flutter project.
+Nuovo progetto Flutter.
 
-## Getting Started
+## Per iniziare
 
-This project is a starting point for a Flutter application.
+Questo progetto è un punto di partenza per un'applicazione Flutter.
 
-A few resources to get you started if this is your first Flutter project:
+Qualche risorsa utile se è il tuo primo progetto Flutter:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- [Impara Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Scrivi la tua prima app Flutter](https://docs.flutter.dev/get-started/codelab)
+- [Risorse per imparare Flutter](https://docs.flutter.dev/reference/learning-resources)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Per aiuto sullo sviluppo con Flutter, consulta la
+[documentazione online](https://docs.flutter.dev/), che offre tutorial,
+esempi, linee guida sullo sviluppo mobile e il riferimento completo delle API.

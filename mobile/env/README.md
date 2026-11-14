@@ -1,3 +1,3 @@
-Copy dev.example.json to dev.json and fill in the key from `supabase status`.
-On the Android emulator use `http://10.0.2.2:54321` instead of 127.0.0.1.
-dev.json is gitignored.
+Copia `dev.example.json` in `dev.json` e inserisci la chiave presa da `supabase status`.
+Sull'emulatore Android usa `http://10.0.2.2:54321` al posto di 127.0.0.1.
+`dev.json` è nel `.gitignore`.
