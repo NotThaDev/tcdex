@@ -1,47 +1,47 @@
 ---
 name: nuxt-web
-description: Struttura e best practice della web app Nuxt 4 del Pokédex TCG — cartelle, composable, data fetching, Pinia, @nuxtjs/supabase v2, i18n, componenti e test. Usare per qualsiasi modifica in web/.
+description: Structure and best practices of the Pokédex TCG Nuxt 4 web app — folders, composables, data fetching, Pinia, @nuxtjs/supabase v2, i18n, components and tests. Use for any change in web/.
 ---
 
 # Web app — Nuxt 4
 
 Stack: Nuxt 4 · Vue 3 `<script setup lang="ts">` · TypeScript strict · Pinia · @nuxtjs/supabase v2 · @nuxtjs/i18n · Vitest + @nuxt/test-utils · Playwright · ESLint (@nuxt/eslint).
 
-## Struttura
+## Structure
 ```
 web/
-├── app/                         # srcDir di Nuxt 4
+├── app/                         # Nuxt 4 srcDir
 │   ├── app.vue
 │   ├── assets/
 │   ├── components/
-│   │   ├── ui/                  # componenti generici (Button, Badge, Skeleton…)
+│   │   ├── ui/                  # generic components (Button, Badge, Skeleton…)
 │   │   ├── card/                # CardTile, CardGrid, CardPrice, CardVariantPicker
 │   │   ├── set/                 # SetTile, SetProgress
 │   │   └── filters/             # FilterBar, FilterSelect
 │   ├── composables/
-│   │   ├── useTcgdex.ts         # unico client TCGdex
-│   │   ├── useCardSearch.ts     # filtri + paginazione + debounce
-│   │   └── useCollection.ts     # query Supabase della collezione
+│   │   ├── useTcgdex.ts         # single TCGdex client
+│   │   ├── useCardSearch.ts     # filters + pagination + debounce
+│   │   └── useCollection.ts     # Supabase queries for the collection
 │   ├── layouts/default.vue
 │   ├── middleware/auth.ts
 │   ├── pages/
-│   │   ├── index.vue            # lista set
+│   │   ├── index.vue            # set list
 │   │   ├── sets/[id].vue
-│   │   ├── cards/index.vue      # ricerca/filtri
-│   │   ├── cards/[id].vue       # dettaglio + prezzi
+│   │   ├── cards/index.vue      # search/filters
+│   │   ├── cards/[id].vue       # detail + prices
 │   │   ├── collection/index.vue
 │   │   ├── login.vue
-│   │   └── confirm.vue          # callback auth
-│   ├── stores/                  # Pinia: solo stato client condiviso
-│   └── utils/                   # funzioni pure (cardImage, formatPrice…)
-├── server/                      # server route Nitro (solo se servono)
-├── shared/types/                # tcgdex.ts, database.types.ts (generato)
+│   │   └── confirm.vue          # auth callback
+│   ├── stores/                  # Pinia: shared client state only
+│   └── utils/                   # pure functions (cardImage, formatPrice…)
+├── server/                      # Nitro server routes (only if needed)
+├── shared/types/                # tcgdex.ts, database.types.ts (generated)
 ├── i18n/locales/{it,en}.json
 ├── tests/{unit,e2e,fixtures}/
 └── nuxt.config.ts
 ```
 
-## Config base
+## Base config
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
@@ -62,10 +62,10 @@ export default defineNuxtConfig({
 ```
 
 ## Data fetching
-- Nelle pagine usa `useAsyncData` / `useFetch` (compatibili con SSR), con chiave che include la lingua: `` `card:${locale.value}:${id}` ``.
-- `watch: [locale]` per ricaricare i dati quando cambia la lingua.
-- Nei composable, `$fetch` solo per azioni (click, submit), mai nel setup senza `useAsyncData`.
-- Stati sempre gestiti: `pending` → skeleton, `error` → messaggio + retry, lista vuota → empty state.
+- In pages use `useAsyncData` / `useFetch` (SSR-compatible), with a key that includes the language: `` `card:${locale.value}:${id}` ``.
+- `watch: [locale]` to reload the data when the language changes.
+- In composables, `$fetch` only for actions (click, submit), never in setup without `useAsyncData`.
+- States always handled: `pending` → skeleton, `error` → message + retry, empty list → empty state.
 
 ```ts
 // app/composables/useTcgdex.ts
@@ -95,29 +95,29 @@ export function useTcgdex() {
 }
 ```
 
-## Supabase (v2 del modulo)
-- `useSupabaseClient<Database>()` per le query; i tipi vengono da `database.types.ts`.
-- `useSupabaseUser()` nella v2 restituisce i **JWT claims**, non l'oggetto User: l'id utente è `user.value?.sub`. Per i dati completi dell'utente usa `supabase.auth.getUser()`.
-- La protezione delle pagine si fa con `redirectOptions.include`, ma la vera sicurezza è la RLS: mai filtrare per `user_id` "per sicurezza" lato client (filtrare per comodità va bene).
-- Upsert per aggiungere una carta, con `onConflict: 'user_id,card_id,lang,variant'`.
+## Supabase (module v2)
+- `useSupabaseClient<Database>()` for queries; the types come from `database.types.ts`.
+- In v2, `useSupabaseUser()` returns the **JWT claims**, not the User object: the user id is `user.value?.sub`. For full user data use `supabase.auth.getUser()`.
+- Page protection is done with `redirectOptions.include`, but the real security is RLS: never filter by `user_id` "for security" on the client side (filtering for convenience is fine).
+- Upsert to add a card, with `onConflict: 'user_id,card_id,lang,variant'`.
 
-## Stato
-- Dati server: `useAsyncData` (cache di Nuxt). Pinia solo per lo stato client condiviso tra pagine (filtri attivi, preferenze UI).
-- Filtri di ricerca sincronizzati con la query string (`useRoute`/`navigateTo`), così le URL sono condivisibili.
+## State
+- Server data: `useAsyncData` (Nuxt cache). Pinia only for client state shared across pages (active filters, UI preferences).
+- Search filters synced with the query string (`useRoute`/`navigateTo`), so the URLs are shareable.
 
-## Componenti
-- `<script setup lang="ts">`, `defineProps` tipizzate, `defineEmits` tipizzati; niente Options API.
-- Un componente fa una sola cosa; se supera circa 150 righe, va diviso.
-- Nessuna chiamata API dentro `components/`: i dati arrivano via props o dai composable delle pagine.
-- Immagini con `<NuxtImg>`, `loading="lazy"` nelle griglie e `alt` col nome della carta.
-- Accessibilità: elementi interattivi nativi (`button`, `a`), focus visibile, contrasto AA.
+## Components
+- `<script setup lang="ts">`, typed `defineProps`, typed `defineEmits`; no Options API.
+- A component does one thing; if it exceeds about 150 lines, split it.
+- No API calls inside `components/`: data arrives via props or from the page composables.
+- Images with `<NuxtImg>`, `loading="lazy"` in grids, and `alt` with the card name.
+- Accessibility: native interactive elements (`button`, `a`), visible focus, AA contrast.
 
 ## i18n
-- Nessuna stringa UI hardcoded: `t('cards.price.unavailable')`.
-- Chiavi annidate per area (`sets.*`, `cards.*`, `collection.*`, `auth.*`); IT ed EN sempre allineati.
-- Prezzi formattati con `Intl.NumberFormat(locale, { style: 'currency', currency: unit })`.
+- No hardcoded UI strings: `t('cards.price.unavailable')`.
+- Nested keys per area (`sets.*`, `cards.*`, `collection.*`, `auth.*`); IT and EN always aligned.
+- Prices formatted with `Intl.NumberFormat(locale, { style: 'currency', currency: unit })`.
 
 ## Test
-- Unit (Vitest): utils, composable (con TCGdex mockato tramite fixture) e componenti con `mountSuspended`.
-- E2E (Playwright): un flusso per ogni criterio di accettazione che tocca la UI (ricerca → dettaglio → aggiungi in collezione).
-- Comandi: `bun run lint && bun run typecheck && bun run test && bun run build`, poi la prova manuale con `bun run dev`.
+- Unit (Vitest): utils, composables (with TCGdex mocked via fixtures) and components with `mountSuspended`.
+- E2E (Playwright): one flow for each acceptance criterion that touches the UI (search → detail → add to collection).
+- Commands: `bun run lint && bun run typecheck && bun run test && bun run build`, then the manual check with `bun run dev`.
