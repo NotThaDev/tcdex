@@ -1,10 +1,20 @@
-## Intent
-`docs/intents/NNNN-slug.md`
+<!-- Follow the clear-description skill (.claude/skills/clear-description/SKILL.md). -->
+## Purpose
+<!-- 1-2 sentences: the problem and what this PR does. Intent: `docs/intents/NNNN-slug.md` -->
 
-## Summary
-<!-- 2-3 lines: what changes for the user -->
+## What it touches
+- `supabase/`:
+- `web/`:
+- `mobile/`:
+- DB: <!-- migration name, or "no schema change" -->
 
-## Checklist
+## Idea and implementation
+<!-- A few lines, then 1-3 Mermaid diagrams (flowchart / sequenceDiagram / erDiagram). -->
+
+## Risks
+-
+
+## Things to check
 - [ ] Intent approved and updated (sections 7–8 filled in)
 - [ ] All acceptance criteria verified
 - [ ] DB: `supabase db reset && supabase test db`
@@ -13,3 +23,6 @@
 - [ ] Tested in the browser / on the emulator
 - [ ] No secrets committed
 - [ ] UI strings translated into IT and EN
+
+## Screenshots
+<!-- Only for visible changes: desktop 800 px, mobile 375 px, attached with `gh pr edit --attach`. -->
