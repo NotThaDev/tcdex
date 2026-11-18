@@ -1,59 +1,59 @@
 ---
 name: tcgdex-data
-description: Come usare l'API TCGdex nel Pokédex TCG — endpoint, lingue IT/EN con fallback, filtri, paginazione, prezzi Cardmarket/TCGplayer, immagini e caching. Usare ogni volta che web o mobile leggono dati delle carte o dei set.
+description: How to use the TCGdex API in the Pokédex TCG — endpoints, IT/EN languages with fallback, filters, pagination, Cardmarket/TCGplayer prices, images and caching. Use whenever web or mobile read card or set data.
 ---
 
-# TCGdex: dati delle carte
+# TCGdex: card data
 
-Base URL: `https://api.tcgdex.net/v2/{lang}`, con `lang` uguale a `it` o `en`. È gratuita e non richiede chiave.
-Prima di usare un campo nuovo, controlla la doc ufficiale: https://tcgdex.dev
+Base URL: `https://api.tcgdex.net/v2/{lang}`, with `lang` equal to `it` or `en`. It is free and needs no key.
+Before using a new field, check the official docs: https://tcgdex.dev
 
-## Endpoint usati
-| Uso | Endpoint | Ritorna |
+## Endpoints used
+| Use | Endpoint | Returns |
 |---|---|---|
-| Lista set | `GET /sets` | `SetBrief[]` (id, name, logo, symbol, cardCount) |
-| Set + carte | `GET /sets/{setId}` | `Set` con `cards: CardBrief[]` |
-| Ricerca carte | `GET /cards?name=…&types=…&rarity=…&illustrator=…` | `CardBrief[]` (id, localId, name, image) |
-| Dettaglio | `GET /cards/{cardId}` | `Card` completa, con `pricing` e `variants` |
-| Valori per i filtri | `GET /types`, `GET /rarities`, `GET /illustrators` | `string[]` |
-| Serie | `GET /series`, `GET /series/{id}` | serie con i relativi set |
+| Set list | `GET /sets` | `SetBrief[]` (id, name, logo, symbol, cardCount) |
+| Set + cards | `GET /sets/{setId}` | `Set` with `cards: CardBrief[]` |
+| Card search | `GET /cards?name=…&types=…&rarity=…&illustrator=…` | `CardBrief[]` (id, localId, name, image) |
+| Detail | `GET /cards/{cardId}` | Full `Card`, with `pricing` and `variants` |
+| Filter values | `GET /types`, `GET /rarities`, `GET /illustrators` | `string[]` |
+| Series | `GET /series`, `GET /series/{id}` | series with their sets |
 
-## Paginazione
-Di default **non** è attiva, quindi senza parametri le liste arrivano intere. Sulle ricerche va sempre usata:
+## Pagination
+By default it is **not** enabled, so without parameters lists arrive whole. Always use it on searches:
 ```
 /cards?name=pika&pagination:page=1&pagination:itemsPerPage=30
 ```
-Fine lista: una pagina con meno di `itemsPerPage` elementi.
-Ordinamento: `sort:field=name&sort:order=ASC`.
+End of list: a page with fewer than `itemsPerPage` items.
+Sorting: `sort:field=name&sort:order=ASC`.
 
-## Lingue e fallback
-- La lingua dei dati segue la lingua dell'interfaccia (`it` | `en`).
-- Il catalogo IT è meno completo di quello EN. Regole:
-  - dettaglio carta: se `/it/cards/{id}` risponde 404, riprova su `/en/` e mostra un badge "EN";
-  - liste: usa la lingua corrente senza fondere i risultati con l'altra lingua.
-- Il `card_id` è identico tra le lingue, quindi la collezione salva solo l'id.
+## Languages and fallback
+- The data language follows the interface language (`it` | `en`).
+- The IT catalog is less complete than the EN one. Rules:
+  - card detail: if `/it/cards/{id}` returns 404, retry on `/en/` and show an "EN" badge;
+  - lists: use the current language without merging results with the other language.
+- The `card_id` is identical across languages, so the collection stores only the id.
 
-## Prezzi
-Ci sono solo nel dettaglio carta:
+## Prices
+They exist only in card detail:
 ```jsonc
 "pricing": {
   "cardmarket": { "unit": "EUR", "avg": …, "low": …, "trend": …, "avg1": …, "avg7": …, "avg30": …, /* *-holo */ },
   "tcgplayer":  { "unit": "USD", "normal": { "lowPrice", "midPrice", "marketPrice", … }, "holofoil": {…}, "reverse-holofoil": {…} }
 }
 ```
-- Cardmarket si aggiorna circa una volta al giorno, TCGplayer circa ogni ora.
-- `pricing` o i singoli mercati possono mancare: gestisci sempre il caso null/undefined e mostra "n.d.".
-- Mostra la valuta originale, senza conversioni.
-- Per il valore totale della collezione non fare N chiamate dal client: servirà una Edge Function con cache (intent dedicato, F8).
+- Cardmarket updates about once a day, TCGplayer about every hour.
+- `pricing` or the individual markets may be missing: always handle the null/undefined case and show "n/a".
+- Show the original currency, without conversions.
+- For the total collection value, do not make N calls from the client: it will need an Edge Function with cache (dedicated intent, F8).
 
-## Immagini
-`image` è un URL base **senza estensione**: componi `{image}/{quality}.{ext}`.
-- Griglia: `low.webp`; dettaglio/zoom: `high.webp`; fallback: `.png`.
-- `image` può mancare (carte senza scan): mostra un placeholder.
-- Loghi e simboli dei set: `{logo}.webp`, `{symbol}.webp`.
+## Images
+`image` is a base URL **without extension**: compose `{image}/{quality}.{ext}`.
+- Grid: `low.webp`; detail/zoom: `high.webp`; fallback: `.png`.
+- `image` may be missing (cards without a scan): show a placeholder.
+- Set logos and symbols: `{logo}.webp`, `{symbol}.webp`.
 
-## Tipi condivisi
-I tipi stanno in `web/shared/types/tcgdex.ts` e nei modelli Dart in `mobile/lib/core/tcgdex/models/`. Ogni campo usato va tipizzato, e i campi opzionali vanno dichiarati come tali.
+## Shared types
+The types live in `web/shared/types/tcgdex.ts` and in the Dart models in `mobile/lib/core/tcgdex/models/`. Every field used must be typed, and optional fields must be declared as such.
 ```ts
 export interface CardBrief { id: string; localId: string; name: string; image?: string }
 export interface Card extends CardBrief {
@@ -65,9 +65,9 @@ export interface Card extends CardBrief {
 }
 ```
 
-## Best practice
-- Un solo client TCGdex per app (`useTcgdex` su web, `TcgdexClient` su mobile). Nessuna `fetch` sparsa nei componenti.
-- Cache: liste di set e valori dei filtri cambiano raramente, quindi si tengono in cache per tutta la sessione. Il dettaglio carta si tiene in cache per chiave `lang:id`.
-- Ricerca con debounce di 300 ms e richiesta precedente annullata (AbortController / CancelToken).
-- Timeout di 10 s; errore di rete con UI di retry. L'API è pubblica e gratuita, quindi va trattata con rispetto: niente polling.
-- Test: usa fixture JSON reali salvate in `tests/fixtures/tcgdex/` (web) e `test/fixtures/` (mobile), non l'API vera.
+## Best practices
+- One single TCGdex client per app (`useTcgdex` on web, `TcgdexClient` on mobile). No scattered `fetch` calls in components.
+- Cache: set lists and filter values change rarely, so they are cached for the whole session. Card detail is cached by the key `lang:id`.
+- Search with a 300 ms debounce and the previous request cancelled (AbortController / CancelToken).
+- 10 s timeout; network error with a retry UI. The API is public and free, so treat it with respect: no polling.
+- Tests: use real JSON fixtures saved in `tests/fixtures/tcgdex/` (web) and `test/fixtures/` (mobile), not the real API.

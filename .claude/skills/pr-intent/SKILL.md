@@ -1,41 +1,41 @@
 ---
 name: pr-intent
-description: Workflow obbligatorio per ogni modifica al repo Pokédex TCG — scrivere l'INTENT, pianificare, validare, implementare con i modelli giusti e verificare prima di aprire la PR. Usare all'inizio di qualsiasi feature, fix o refactor.
+description: Mandatory workflow for every change to the Pokédex TCG repo — write the INTENT, plan, validate, implement with the right models and verify before opening the PR. Use at the start of any feature, fix or refactor.
 ---
 
-# Workflow PR guidato da INTENT
+# INTENT-driven PR workflow
 
-Nessuna riga di codice applicativo prima che esista un intent approvato in `docs/intents/`.
+No application code line before an approved intent exists in `docs/intents/`.
 
 ## 1. Intent
-1. Trova il prossimo numero libero: `ls docs/intents | sort | tail -1`.
-2. Copia `docs/intents/_TEMPLATE.md` in `docs/intents/NNNN-slug.md` (slug in kebab-case, in inglese).
-3. Compila le sezioni 1–5. Se qualcosa non è chiaro (scope, comportamento, UX), **chiedi all'utente**: non fare assunzioni.
-4. Metti `Stato: bozza` e chiedi l'approvazione. Passa ad `approvato` solo dopo il sì esplicito dell'utente.
+1. Find the next free number: `ls docs/intents | sort | tail -1`.
+2. Copy `docs/intents/_TEMPLATE.md` to `docs/intents/NNNN-slug.md` (slug in kebab-case, in English).
+3. Fill in sections 1–5. If anything is unclear (scope, behavior, UX), **ask the user**: do not make assumptions.
+4. Set `Status: draft` and ask for approval. Move to `approved` only after the user's explicit yes.
 
-## 2. Piano (Opus)
-- Compila la sezione 6 dividendo il lavoro in passi piccoli: ognuno tocca una sola area e si verifica da solo.
-- Ordine tipico: `db` (migration + RLS + test) → tipi generati → `web` → `mobile`.
-- Prima di pianificare carica le skill delle aree coinvolte: `supabase-backend`, `tcgdex-data`, `nuxt-web`, `flutter-mobile`.
+## 2. Plan (Opus)
+- Fill in section 6 by splitting the work into small steps: each touches only one area and verifies itself.
+- Typical order: `db` (migration + RLS + tests) → generated types → `web` → `mobile`.
+- Before planning, load the skills of the areas involved: `supabase-backend`, `tcgdex-data`, `nuxt-web`, `flutter-mobile`.
 
-## 3. Validazione del piano (Sonnet)
-Lancia un subagente con `model: sonnet`, passandogli l'intent e le skill delle aree. Deve controllare:
-- che ogni criterio di accettazione sia coperto da almeno un passo e da un test;
-- la sicurezza: RLS presente, nessun segreto nei client;
-- la parità web/mobile, oppure un'esclusione motivata;
-- che non ci siano passi superflui (YAGNI).
+## 3. Plan validation (Sonnet)
+Launch a subagent with `model: sonnet`, passing it the intent and the area skills. It must check:
+- that every acceptance criterion is covered by at least one step and one test;
+- security: RLS present, no secrets in clients;
+- web/mobile parity, or a justified exclusion;
+- that there are no superfluous steps (YAGNI).
 
-Riporta l'esito nella riga "Validazione del piano" dell'intent. Se il validatore trova problemi, correggi il piano prima di proseguire.
+Report the result in the "Plan validation" line of the intent. If the validator finds problems, fix the plan before continuing.
 
-## 4. Implementazione (Haiku)
-- Crea il branch `feat|fix|chore/NNNN-slug`.
-- Delega ogni passo a un subagente con `model: haiku`, passandogli: il passo, i file coinvolti, la skill dell'area e i criteri di accettazione collegati.
-- I passi indipendenti (per esempio web e mobile dopo il db) possono andare in parallelo.
-- Dopo ogni passo spunta la tabella del piano e fai un commit in Conventional Commits.
-- Se un passo rivela che il piano è sbagliato, fermati, aggiorna l'intent e chiedi all'utente se cambia lo scope.
+## 4. Implementation (Haiku)
+- Create the branch `feat|fix|chore/NNNN-slug`.
+- Delegate each step to a subagent with `model: haiku`, passing it: the step, the files involved, the area skill and the linked acceptance criteria.
+- Independent steps (for example web and mobile after db) can run in parallel.
+- After each step, tick the plan table and make a Conventional Commits commit.
+- If a step reveals the plan is wrong, stop, update the intent and ask the user whether the scope changes.
 
-## 5. Verifica (obbligatoria prima di dire "fatto")
-Esegui i comandi delle aree toccate e riporta l'esito reale nella sezione 7:
+## 5. Verification (mandatory before saying "done")
+Run the commands for the areas touched and report the real result in section 7:
 
 ```bash
 supabase db reset && supabase test db                                    # db
@@ -43,9 +43,9 @@ cd web && bun run lint && bun run typecheck && bun run test && bun run build    
 cd mobile && dart format --set-exit-if-changed . && flutter analyze && flutter test  # mobile
 ```
 
-- Se la modifica tocca il frontend, anche solo via endpoint o RLS: prova ogni criterio di accettazione nel browser (`bun run dev`) e/o su emulatore.
-- Un comando fallito **non** si aggira: si corregge o si segnala all'utente.
+- If the change touches the frontend, even only via an endpoint or RLS: test every acceptance criterion in the browser (`bun run dev`) and/or on an emulator.
+- A failed command is **not** worked around: fix it or report it to the user.
 
 ## 6. PR
-- Compila la sezione 8 e metti `Stato: in review`.
-- Titolo in Conventional Commits; il corpo segue `.github/pull_request_template.md` e rimanda all'intent.
+- Fill in section 8 and set `Status: in review`.
+- Title in Conventional Commits; the body follows `.github/pull_request_template.md` and links to the intent.
