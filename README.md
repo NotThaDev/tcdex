@@ -53,6 +53,7 @@ pokedex-tcg/
 ├── .claude/
 │   └── skills/
 │       ├── pr-intent/            # PR workflow: intent → plan → implementation → verification
+│       ├── clear-description/    # PR descriptions: fixed sections, Mermaid diagrams, live checklist
 │       ├── supabase-backend/     # migrations, RLS, Edge Functions, types
 │       ├── tcgdex-data/          # how to use TCGdex (endpoints, languages, prices, images)
 │       ├── nuxt-web/             # web structure and best practices

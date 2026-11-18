@@ -48,4 +48,5 @@ cd mobile && dart format --set-exit-if-changed . && flutter analyze && flutter t
 
 ## 6. PR
 - Fill in section 8 and set `Status: in review`.
-- Title in Conventional Commits; the body follows `.github/pull_request_template.md` and links to the intent.
+- Title in Conventional Commits; the body follows the `clear-description` skill (same sections as `.github/pull_request_template.md`) and links to the intent.
+- After each verification step, tick its item in the PR's "Things to check" list (see `clear-description`).
