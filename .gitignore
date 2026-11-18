@@ -1,5 +1,14 @@
 .DS_Store
 node_modules/
 .env
+.env.*
 !.env.example
+web/.nuxt/
+web/.output/
+web/.data/
 mobile/env/*.json
+!mobile/env/*.example.json
+.dart_tool/
+build/
+supabase/.temp/
+supabase/.branches/

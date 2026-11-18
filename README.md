@@ -1,17 +1,17 @@
 # Pokédex TCG
 
-App "Pokédex" per le carte del Pokémon Trading Card Game: catalogo completo, filtri avanzati, prezzi di mercato e collezione personale sincronizzata tra mobile e web.
+App "Pokédex" for the Pokémon Trading Card Game cards: full catalog, advanced filters, market prices and a personal Collection synced between mobile and web.
 
-| Parte | Stack | Cartella |
+| Part | Stack | Folder |
 |---|---|---|
 | Mobile | Flutter (Dart 3) · Riverpod 3 · go_router · supabase_flutter | `mobile/` |
 | Web | Nuxt 4 (Vue 3, TypeScript) · Pinia · @nuxtjs/supabase v2 · @nuxtjs/i18n | `web/` |
 | Backend | Supabase: Postgres + RLS, Auth, Edge Functions (Deno/TS) | `supabase/` |
-| Dati carte | [TCGdex](https://tcgdex.dev) REST API v2 (pubblica, senza chiave, IT + EN, prezzi inclusi) | — |
+| Card data | [TCGdex](https://tcgdex.dev) REST API v2 (public, no key, IT + EN, prices included) | — |
 
 ---
 
-## Architettura
+## Architecture
 
 ```
 ┌──────────────┐        ┌──────────────┐
@@ -19,93 +19,94 @@ App "Pokédex" per le carte del Pokémon Trading Card Game: catalogo completo, f
 │ Flutter      │        │ Nuxt 4       │
 └──┬────────┬──┘        └──┬────────┬──┘
    │        │              │        │
-   │  catalogo, set, prezzi (sola lettura)
+   │  catalog, sets, prices (read-only)
    │        └──────┬───────┘        │
    │               ▼                │
    │        api.tcgdex.net/v2/{it|en}
    │                                │
-   │  auth + collezione (lettura/scrittura, RLS)
+   │  auth + Collection (read/write, RLS)
    └──────────────┬─────────────────┘
                   ▼
            Supabase (Postgres)
 ```
 
-Regole architetturali:
+Architecture rules:
 
-1. **TCGdex è la fonte di verità del catalogo.** Non copiamo il catalogo in Supabase. Se servirà una cache (per esempio i prezzi per calcolare il valore della collezione), la gestirà una Edge Function, mai i client.
-2. **Supabase contiene solo i dati dell'utente**: collezione e, in futuro, preferenze e wishlist.
-3. **Il `card_id` di TCGdex (es. `swsh3-136`) è la chiave che lega i due mondi.** È uguale in tutte le lingue.
-4. **Nessuna logica di sicurezza nei client.** Ogni accesso ai dati utente è protetto da RLS lato Postgres.
-5. **Mobile e web hanno le stesse funzioni e lo stesso modello di dati.** Una feature non è finita finché non esiste su entrambi, oppure finché l'INTENT non dice esplicitamente il contrario.
+1. **TCGdex is the source of truth for the catalog.** We do not copy the catalog into Supabase. If a cache is needed (for example prices to compute the Estimated value of the Collection), an Edge Function will handle it, never the clients.
+2. **Supabase holds only user data**: the Collection and, in the future, preferences and wishlist.
+3. **TCGdex's `card_id` (e.g. `swsh3-136`) is the key that links the two worlds.** It is the same in all languages.
+4. **No security logic in clients.** Every access to user data is protected by RLS on the Postgres side.
+5. **Mobile and web have the same features and the same data model.** A feature is not finished until it exists on both, or until the INTENT explicitly says otherwise.
 
 ---
 
-## Struttura del repository
+## Repository structure
 
 ```
 pokedex-tcg/
-├── README.md                     # questo file
+├── README.md                     # this file
 ├── docs/
 │   ├── intents/
-│   │   ├── _TEMPLATE.md          # template INTENT, da copiare prima di ogni PR
-│   │   └── 0001-<slug>.md        # un file per PR
-│   └── decisions/                # ADR brevi per le scelte architetturali
+│   │   ├── _TEMPLATE.md          # INTENT template, copy before every PR
+│   │   └── 0001-<slug>.md        # one file per PR
+│   └── decisions/                # short ADRs for architectural choices
 ├── .claude/
 │   └── skills/
-│       ├── pr-intent/            # workflow PR: intent → piano → implementazione → verifica
-│       ├── supabase-backend/     # migration, RLS, Edge Functions, tipi
-│       ├── tcgdex-data/          # come si usa TCGdex (endpoint, lingue, prezzi, immagini)
-│       ├── nuxt-web/             # struttura e best practice web
-│       └── flutter-mobile/       # struttura e best practice mobile
+│       ├── pr-intent/            # PR workflow: intent → plan → implementation → verification
+│       ├── supabase-backend/     # migrations, RLS, Edge Functions, types
+│       ├── tcgdex-data/          # how to use TCGdex (endpoints, languages, prices, images)
+│       ├── nuxt-web/             # web structure and best practices
+│       └── flutter-mobile/       # mobile structure and best practices
 ├── .github/
 │   └── pull_request_template.md
 ├── supabase/
 │   ├── config.toml
-│   ├── migrations/               # SQL versionato: unica fonte dello schema
-│   ├── seed.sql                  # dati di sviluppo locale
+│   ├── migrations/               # versioned SQL: single source of truth for the schema
+│   ├── seed.sql                  # local development data
 │   ├── functions/                # Edge Functions (Deno)
-│   └── tests/                    # test pgTAP (RLS e vincoli)
-├── web/                          # Nuxt 4 (vedi skill nuxt-web)
+│   └── tests/                    # pgTAP tests (RLS and constraints)
+├── web/                          # Nuxt 4 (see nuxt-web skill)
 │   ├── app/
 │   ├── server/
 │   ├── i18n/locales/{it,en}.json
-│   ├── shared/types/             # tipi TCGdex + database.types.ts generato
+│   ├── shared/types/             # TCGdex types + generated database.types.ts
 │   └── tests/
-└── mobile/                       # Flutter (vedi skill flutter-mobile)
+└── mobile/                       # Flutter (see flutter-mobile skill)
     ├── lib/
     │   ├── app/
     │   ├── core/
-    │   └── features/<feature>/{data,domain,presentation}/
-    ├── l10n/
+    │   ├── features/<feature>/{data,domain,presentation}/
+    │   └── l10n/                 # ARB files it/en
+    ├── env/dev.example.json
     └── test/
 ```
 
 ---
 
-## Funzionalità (MVP)
+## Features (MVP)
 
 | # | Feature | Web | Mobile |
 |---|---|---|---|
-| F1 | Catalogo: lista set, carte per set, dettaglio carta | ☐ | ☐ |
-| F2 | Ricerca e filtri: nome, tipo, rarità, illustratore, set | ☐ | ☐ |
-| F3 | Lingua dati IT/EN, con fallback EN se la carta non c'è in IT | ☐ | ☐ |
-| F4 | Prezzi Cardmarket (EUR) e TCGplayer (USD) nel dettaglio | ☐ | ☐ |
-| F5 | Auth Supabase (email + magic link) | ☐ | ☐ |
-| F6 | Collezione: aggiungi/rimuovi, quantità, variante, lingua della carta fisica | ☐ | ☐ |
-| F7 | Avanzamento per set (possedute / totali) | ☐ | ☐ |
-| F8 | Valore stimato della collezione (richiede cache prezzi) | ☐ | ☐ |
+| F1 | Catalog: set list, cards per set, card details | ☐ | ☐ |
+| F2 | Search and filters: name, type, rarity, illustrator, set | ☐ | ☐ |
+| F3 | Data language IT/EN, with EN fallback if the card is not available in IT | ☐ | ☐ |
+| F4 | Cardmarket (EUR) and TCGplayer (USD) prices in the details | ☐ | ☐ |
+| F5 | Supabase Auth (email + magic link) | ☐ | ☐ |
+| F6 | Collection: add/remove, quantity, variant, language of the physical card | ☐ | ☐ |
+| F7 | Progress per set (owned / total) | ☐ | ☐ |
+| F8 | Estimated value of the Collection (requires price cache) | ☐ | ☐ |
 
 ---
 
-## Modello dati (Supabase)
+## Data model (Supabase)
 
 ```sql
 -- supabase/migrations/<timestamp>_collection.sql
 create table public.collection (
   id         bigint generated always as identity primary key,
   user_id    uuid not null default auth.uid() references auth.users on delete cascade,
-  card_id    text not null,                 -- id TCGdex, es. "swsh3-136"
-  set_id     text not null,                 -- es. "swsh3", per l'avanzamento per set
+  card_id    text not null,                 -- TCGdex id, e.g. "swsh3-136"
+  set_id     text not null,                 -- e.g. "swsh3", for progress per set
   lang       text not null default 'en' check (lang in ('it','en')),
   variant    text not null default 'normal'
              check (variant in ('normal','reverse','holo','firstEdition')),
@@ -116,18 +117,18 @@ create table public.collection (
 );
 ```
 
-Lo schema completo, con RLS, indici e trigger, si definisce **solo** tramite migration (vedi skill `supabase-backend`).
+The full schema, with RLS, indexes and triggers, is defined **only** through migrations (see `supabase-backend` skill).
 
 ---
 
-## Setup locale
+## Local setup
 
-Prerequisiti: Node 22 LTS o superiore, Bun, Flutter stable, Docker e Supabase CLI.
+Prerequisites: Node 22 LTS or higher, Bun, Flutter stable, Docker and Supabase CLI.
 
 ```bash
-# 1. Backend locale
-supabase start                 # avvia Postgres, Auth e Studio in Docker
-supabase db reset              # applica le migration e seed.sql
+# 1. Local backend
+supabase start                 # starts Postgres, Auth and Studio in Docker
+supabase db reset              # applies migrations and seed.sql
 supabase gen types typescript --local > web/shared/types/database.types.ts
 
 # 2. Web
@@ -140,45 +141,48 @@ bun run dev                       # http://localhost:3000
 cd mobile
 flutter pub get
 dart run build_runner build -d
+cp env/dev.example.json env/dev.json  # then insert the key
 flutter run --dart-define-from-file=env/dev.json
 ```
 
-### Variabili d'ambiente
+### Environment variables
 
-| Dove | Variabile | Note |
+| Where | Variable | Notes |
 |---|---|---|
-| web/.env | `SUPABASE_URL`, `SUPABASE_KEY` | solo la chiave pubblica (anon/publishable) |
-| web/.env | `SUPABASE_SECRET_KEY` | solo se una server route deve bypassare RLS; mai esposta al client |
-| mobile/env/*.json | `SUPABASE_URL`, `SUPABASE_KEY` | passate con `--dart-define-from-file`; file in `.gitignore` |
+| web/.env | `SUPABASE_URL`, `SUPABASE_KEY` | public key only (anon/publishable) |
+| web/.env | `SUPABASE_SECRET_KEY` | only if a server route must bypass RLS; never exposed to the client |
+| mobile/env/*.json | `SUPABASE_URL`, `SUPABASE_KEY` | passed with `--dart-define-from-file`; file in `.gitignore` |
 
-Nessun segreto va committato. Nel repo c'è solo `*.example`.
+No secrets should be committed. The only env files in the repo are `web/.env.example` and `mobile/env/dev.example.json`: copy them to `web/.env` and `mobile/env/dev.json` and insert the publishable key from `supabase status`.
+
+On an Android emulator `127.0.0.1` points to the emulator itself: in `mobile/env/dev.json` use `SUPABASE_URL=http://10.0.2.2:54321`. On an iOS simulator `http://127.0.0.1:54321` works.
 
 ---
 
-## Comandi di qualità
+## Quality commands
 
-Una PR si apre solo se **tutti** questi comandi passano.
+A PR is opened only if **all** of these commands pass.
 
-| Area | Comando |
+| Area | Command |
 |---|---|
 | Supabase | `supabase db reset && supabase test db` |
 | Web | `bun run lint && bun run typecheck && bun run test && bun run build` |
 | Mobile | `dart format --set-exit-if-changed . && flutter analyze && flutter test` |
 
-Se la modifica tocca il frontend, anche indirettamente tramite un endpoint o la RLS, va provata nel browser per il web e su emulatore o dispositivo per il mobile.
+If the change touches the frontend, even indirectly through an endpoint or RLS, test it in the browser for web and on an emulator or device for mobile.
 
 ---
 
-## Workflow di sviluppo
+## Development workflow
 
-1. **Intent**: copia `docs/intents/_TEMPLATE.md` in `docs/intents/NNNN-slug.md` e compilalo. Nessun codice prima che l'intent sia approvato.
+1. **Intent**: copy `docs/intents/_TEMPLATE.md` to `docs/intents/NNNN-slug.md` and fill it in. No code before the intent is approved.
 2. **Branch**: `feat/NNNN-slug`, `fix/NNNN-slug`, `chore/NNNN-slug`.
-3. **Piano** (Opus) → **validazione del piano** (Sonnet) → **implementazione** (Haiku, anche con subagenti). Dettagli nella skill `pr-intent`.
-4. **Verifica**: comandi di qualità più prova manuale, con i risultati riportati nell'intent.
-5. **PR**: titolo in Conventional Commits; la descrizione rimanda all'intent.
+3. **Plan** (Opus) → **plan validation** (Sonnet) → **implementation** (Haiku, also with subagents). Details in the `pr-intent` skill.
+4. **Verification**: quality commands plus manual testing, with results reported in the intent.
+5. **PR**: title in Conventional Commits; the description refers to the intent.
 
-### Convenzioni
+### Conventions
 
-- **Commit**: Conventional Commits (`feat(web): filtri per rarità`, `fix(mobile): …`, `chore(db): …`). Scope possibili: `web`, `mobile`, `db`, `fn`, `docs`, `repo`.
-- **Lingua**: codice, nomi e commenti in inglese; documentazione e intent in italiano; UI in IT e EN tramite i18n.
-- **Una PR fa una sola cosa.** Le migration vanno in PR separate o all'inizio della PR della feature, mai a metà.
+- **Commit**: Conventional Commits (`feat(web): filters by rarity`, `fix(mobile): …`, `chore(db): …`). Possible scopes: `web`, `mobile`, `db`, `fn`, `docs`, `repo`.
+- **Language**: code, names and comments in English; documentation and intents in English; UI in IT and EN via i18n.
+- **One PR does one thing.** Migrations go in separate PRs or at the start of the feature PR, never in the middle.

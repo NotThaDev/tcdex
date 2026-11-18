@@ -1,76 +1,76 @@
-# INTENT NNNN — <titolo breve>
+# INTENT NNNN — <short title>
 
-> Copia questo file in `docs/intents/NNNN-slug.md` **prima** di scrivere codice.
-> Le sezioni 1–6 vanno compilate e approvate prima dell'implementazione; le sezioni 7–8 si compilano a lavoro finito.
+> Copy this file to `docs/intents/NNNN-slug.md` **before** writing any code.
+> Sections 1–6 must be filled in and approved before implementation; sections 7–8 are filled in when the work is finished.
 
-| Campo | Valore |
+| Field | Value |
 |---|---|
-| Stato | `bozza` · `approvato` · `in sviluppo` · `in review` · `chiuso` |
-| Tipo | `feat` · `fix` · `refactor` · `chore` · `docs` |
-| Aree | `web` · `mobile` · `db` · `fn` |
+| Status | `draft` · `approved` · `in development` · `in review` · `closed` |
+| Type | `feat` · `fix` · `refactor` · `chore` · `docs` |
+| Areas | `web` · `mobile` · `db` · `fn` |
 | Feature README | F? |
 | Branch | `feat/NNNN-slug` |
 | PR | #… |
 
 ---
 
-## 1. Perché
-Il problema o il bisogno, in 2–4 frasi. Cosa non si può fare oggi, o cosa non funziona.
+## 1. Why
+The problem or need, in 2–4 sentences. What cannot be done today, or what does not work.
 
-## 2. Cosa (scope)
-Cosa cambia dal punto di vista dell'utente.
+## 2. What (scope)
+What changes from the user's point of view.
 
-**Incluso**
+**Included**
 - …
 
-**Escluso** (esplicito: evita lo scope creep)
+**Excluded** (explicit: avoids scope creep)
 - …
 
-## 3. Criteri di accettazione
-Verificabili, possibilmente nel formato *Dato / Quando / Allora*. Ognuno diventa almeno un test o un passo della prova manuale.
+## 3. Acceptance criteria
+Verifiable, preferably in the *Given / When / Then* format. Each one becomes at least one test or a step of the manual check.
 
-- [ ] AC1 — Dato … quando … allora …
+- [ ] AC1 — Given … when … then …
 - [ ] AC2 — …
 
-## 4. Design tecnico
-- **Dati / schema**: nuove tabelle, colonne, migration, policy RLS (incolla lo SQL o rimanda al file).
-- **API usate**: endpoint TCGdex, query Supabase, Edge Functions.
-- **Web**: pagine, componenti e composable toccati.
-- **Mobile**: feature, provider, schermate e route toccate.
-- **Parità web/mobile**: si fa su entrambi? Se no, perché e quando.
-- **Alternative scartate**: cosa e perché, una riga ciascuna.
+## 4. Technical design
+- **Data / schema**: new tables, columns, migrations, RLS policies (paste the SQL or refer to the file).
+- **APIs used**: TCGdex endpoints, Supabase queries, Edge Functions.
+- **Web**: pages, components and composables touched.
+- **Mobile**: features, providers, screens and routes touched.
+- **Web/mobile parity**: is it done on both? If not, why and when.
+- **Discarded alternatives**: what and why, one line each.
 
-## 5. Rischi e impatti
-- Sicurezza / RLS:
-- Performance (numero di chiamate a TCGdex, dimensione delle liste, paginazione):
-- Breaking change / migrazione dati:
-- Dipendenze nuove (nome, versione, motivo):
+## 5. Risks and impacts
+- Security / RLS:
+- Performance (number of TCGdex calls, list size, pagination):
+- Breaking change / data migration:
+- New dependencies (name, version, reason):
 
-## 6. Piano
-Passi piccoli, ognuno verificabile. Indica il modello assegnato.
+## 6. Plan
+Small steps, each verifiable. Indicate the assigned model.
 
-| # | Passo | Area | Modello | Fatto |
+| # | Step | Area | Model | Done |
 |---|---|---|---|---|
 | 1 | … | db | Haiku | ☐ |
 | 2 | … | web | Haiku | ☐ |
 
-Validazione del piano (Sonnet): ☐ OK · note: …
+Plan validation (Sonnet): ☐ OK · notes: …
 
 ---
 
-## 7. Verifica (a lavoro finito)
+## 7. Verification (when the work is finished)
 
-| Controllo | Comando / azione | Esito |
+| Check | Command / action | Result |
 |---|---|---|
 | DB | `supabase db reset && supabase test db` | ☐ |
 | Web | `bun run lint && bun run typecheck && bun run test && bun run build` | ☐ |
 | Mobile | `dart format --set-exit-if-changed . && flutter analyze && flutter test` | ☐ |
-| Prova browser | passi eseguiti per ogni AC | ☐ |
-| Prova mobile | emulatore/dispositivo, passi per ogni AC | ☐ |
+| Browser check | steps performed for each AC | ☐ |
+| Mobile check | emulator/device, steps for each AC | ☐ |
 
-Note, screenshot, problemi trovati:
+Notes, screenshots, problems found:
 
-## 8. Esito
-- Cosa è stato fatto davvero (differenze rispetto al piano):
-- Debito tecnico lasciato (con TODO o issue collegata):
+## 8. Outcome
+- What was actually done (differences from the plan):
+- Technical debt left (with TODO or linked issue):
 - Follow-up:

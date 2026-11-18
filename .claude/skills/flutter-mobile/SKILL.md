@@ -1,24 +1,24 @@
 ---
 name: flutter-mobile
-description: Struttura e best practice dell'app Flutter del Pokédex TCG — architettura feature-first, Riverpod 3 con codegen, go_router, dio, supabase_flutter, modelli, l10n e test. Usare per qualsiasi modifica in mobile/.
+description: Structure and best practices of the Pokédex TCG Flutter app — feature-first architecture, Riverpod 3 with codegen, go_router, dio, supabase_flutter, models, l10n and tests. Use for any change in mobile/.
 ---
 
-# App mobile — Flutter
+# Mobile app — Flutter
 
 Stack: Flutter stable · Dart 3 · flutter_riverpod 3 + riverpod_annotation/riverpod_generator · go_router · dio · supabase_flutter · freezed + json_serializable · cached_network_image · flutter_localizations (gen-l10n) · very_good_analysis · mocktail.
 
-## Struttura (feature-first, 3 livelli)
+## Structure (feature-first, 3 levels)
 ```
 mobile/lib/
 ├── main.dart                     # bootstrap: Supabase.initialize, ProviderScope
 ├── app/
-│   ├── app.dart                  # MaterialApp.router, tema, l10n
+│   ├── app.dart                  # MaterialApp.router, theme, l10n
 │   ├── router.dart               # go_router + redirect auth
 │   └── theme.dart
 ├── core/
 │   ├── env.dart                  # String.fromEnvironment('SUPABASE_URL'…)
 │   ├── tcgdex/
-│   │   ├── tcgdex_client.dart    # unico client dio
+│   │   ├── tcgdex_client.dart    # single dio client
 │   │   └── models/               # Card, CardBrief, SetBrief, Pricing (freezed)
 │   ├── supabase/supabase_providers.dart
 │   └── widgets/                  # AsyncValueView, CardImage, EmptyState
@@ -29,10 +29,10 @@ mobile/lib/
 │   └── auth/        {data,domain,presentation}/
 └── l10n/app_it.arb, app_en.arb
 ```
-- `data/`: repository, che parlano con TCGdex o Supabase e restituiscono modelli di dominio.
-- `domain/`: modelli e logica pura (per esempio il calcolo dell'avanzamento del set), senza Flutter.
-- `presentation/`: schermate, widget e provider della UI.
-- Una feature non importa mai il `presentation/` di un'altra feature; ciò che è condiviso va in `core/`.
+- `data/`: repositories that talk to TCGdex or Supabase and return domain models.
+- `domain/`: models and pure logic (for example the set progress calculation), without Flutter.
+- `presentation/`: screens, widgets and UI providers.
+- A feature never imports the `presentation/` of another feature; what is shared goes in `core/`.
 
 ## Bootstrap
 ```dart
@@ -49,7 +49,7 @@ abstract final class Env {
   static const supabaseKey = String.fromEnvironment('SUPABASE_KEY');
 }
 ```
-Avvio: `flutter run --dart-define-from-file=env/dev.json`. I file `env/*.json` sono in `.gitignore`.
+Launch: `flutter run --dart-define-from-file=env/dev.json`. The `env/*.json` files are listed in `.gitignore`.
 
 ## Riverpod 3 (codegen)
 ```dart
@@ -76,39 +76,39 @@ class CollectionNotifier extends _$CollectionNotifier {
   }
 }
 ```
-- Provider generati con `@riverpod`; dopo ogni modifica lancia `dart run build_runner build -d` (oppure `watch`).
-- `ref.watch` nel `build`, `ref.read` nei callback.
-- Stati async renderizzati con `switch` su `AsyncValue` (o un widget `AsyncValueView` comune): loading → skeleton, error → retry, data vuoto → empty state.
-- Niente `setState` per lo stato di dominio; `StatefulWidget` solo per controller locali (TextEditingController, animazioni).
+- Providers generated with `@riverpod`; after every change run `dart run build_runner build -d` (or `watch`).
+- `ref.watch` in `build`, `ref.read` in callbacks.
+- Async states rendered with a `switch` on `AsyncValue` (or a shared `AsyncValueView` widget): loading → skeleton, error → retry, empty data → empty state.
+- No `setState` for domain state; `StatefulWidget` only for local controllers (TextEditingController, animations).
 
-## Rete (TCGdex)
-- Un solo `Dio` con `baseUrl: 'https://api.tcgdex.net/v2'`, timeout di 10 s e un interceptor di log solo in debug.
-- Ricerca: debounce di 300 ms e `CancelToken` per annullare la richiesta precedente.
-- Fallback IT → EN su 404 nel dettaglio (vedi skill `tcgdex-data`).
-- Immagini con `CachedNetworkImage` (`low.webp` in griglia, `high.webp` nel dettaglio) e placeholder se `image` è null.
+## Network (TCGdex)
+- A single `Dio` with `baseUrl: 'https://api.tcgdex.net/v2'`, a 10 s timeout and a log interceptor in debug only.
+- Search: 300 ms debounce and a `CancelToken` to cancel the previous request.
+- IT → EN fallback on 404 in detail (see skill `tcgdex-data`).
+- Images with `CachedNetworkImage` (`low.webp` in grid, `high.webp` in detail) and a placeholder if `image` is null.
 
 ## Supabase
-- `Supabase.instance.client` esposto con un provider, mai usato direttamente nei widget.
-- Auth: `onAuthStateChange` come stream provider; il `redirect` di go_router manda su `/login` le route `/collection/**`.
-- Deep link per magic link/OAuth configurati per Android (intent-filter) e iOS (URL scheme), e annotati nell'intent.
-- Modello `CollectionEntry` allineato alla tabella `public.collection` (snake_case in JSON tramite `@JsonKey`/`fieldRename`).
+- `Supabase.instance.client` exposed through a provider, never used directly in widgets.
+- Auth: `onAuthStateChange` as a stream provider; the go_router `redirect` sends `/collection/**` routes to `/login`.
+- Deep links for magic link/OAuth configured for Android (intent-filter) and iOS (URL scheme), and documented in the intent.
+- `CollectionEntry` model aligned with the `public.collection` table (snake_case in JSON via `@JsonKey`/`fieldRename`).
 
-## Modelli
-- `freezed` + `json_serializable`; campi opzionali TCGdex come nullable.
-- `fromJson` testato con fixture reali in `test/fixtures/`.
+## Models
+- `freezed` + `json_serializable`; optional TCGdex fields as nullable.
+- `fromJson` tested with real fixtures in `test/fixtures/`.
 
 ## UI
-- Material 3 e tema in `app/theme.dart`, senza colori hardcoded nei widget.
-- Widget piccoli e `const` dove possibile; oltre circa 150 righe si estraggono.
-- Liste con `ListView.builder`/`GridView.builder` e paginazione infinita (si carica la pagina successiva all'80% dello scroll).
-- Accessibilità: `Semantics`/`semanticLabel` sulle immagini delle carte e tap target di almeno 48 dp.
+- Material 3 and theme in `app/theme.dart`, no hardcoded colors in widgets.
+- Small widgets and `const` where possible; beyond about 150 lines, extract them.
+- Lists with `ListView.builder`/`GridView.builder` and infinite pagination (next page loaded at 80% of the scroll).
+- Accessibility: `Semantics`/`semanticLabel` on card images and tap targets of at least 48 dp.
 
 ## l10n
-- `gen-l10n` con `app_it.arb` e `app_en.arb`; nessuna stringa hardcoded: `context.l10n.priceUnavailable`.
-- La lingua dei dati TCGdex segue la locale dell'app (provider `dataLangProvider`).
+- `gen-l10n` with `app_it.arb` and `app_en.arb`; no hardcoded strings: `context.l10n.priceUnavailable`.
+- The TCGdex data language follows the app locale (`dataLangProvider` provider).
 
 ## Test
-- Unit: repository (dio mockato con mocktail e fixture), logica di dominio, notifier (con `ProviderContainer` e override).
-- Widget: schermate principali con i provider in override (stati loading, error e data).
-- Integration (`integration_test/`): flusso ricerca → dettaglio → aggiungi in collezione.
-- Comandi: `dart format --set-exit-if-changed . && flutter analyze && flutter test`, poi la prova su emulatore.
+- Unit: repositories (dio mocked with mocktail and fixtures), domain logic, notifiers (with `ProviderContainer` and overrides).
+- Widget: main screens with providers overridden (loading, error and data states).
+- Integration (`integration_test/`): search → detail → add to collection flow.
+- Commands: `dart format --set-exit-if-changed . && flutter analyze && flutter test`, then the check on an emulator.

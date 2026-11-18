@@ -1,28 +1,28 @@
 ---
 name: supabase-backend
-description: Regole per il backend Supabase del Pokédex TCG — migration SQL, Row Level Security, indici, trigger, test pgTAP, Edge Functions e generazione dei tipi. Usare per qualsiasi modifica a supabase/ o allo schema dati.
+description: Rules for the Pokédex TCG Supabase backend — SQL migrations, Row Level Security, indexes, triggers, pgTAP tests, Edge Functions and type generation. Use for any change to supabase/ or to the data schema.
 ---
 
 # Supabase backend
 
-## Principi
-- **Lo schema esiste solo nelle migration** (`supabase/migrations/`). Mai modificare lo schema da Studio senza poi generare la migration.
-- **RLS attiva su ogni tabella in `public`**, senza eccezioni. Una tabella senza policy non è leggibile dai client, ed è il comportamento voluto.
-- I client usano solo la chiave pubblica (anon/publishable). La chiave segreta/service role si usa solo dentro Edge Functions o server route.
-- Supabase contiene i dati utente; il catalogo carte resta su TCGdex (vedi `tcgdex-data`).
+## Principles
+- **The schema exists only in migrations** (`supabase/migrations/`). Never modify the schema from Studio without then generating the migration.
+- **RLS enabled on every table in `public`**, no exceptions. A table without policies is not readable by clients, and that is the intended behavior.
+- Clients use only the public key (anon/publishable). The secret/service role key is used only inside Edge Functions or server routes.
+- Supabase holds the user data; the card catalog stays on TCGdex (see `tcgdex-data`).
 
-## Comandi
+## Commands
 ```bash
-supabase migration new <slug>          # crea supabase/migrations/<ts>_<slug>.sql
-supabase db reset                      # ricrea il DB locale: migration + seed
-supabase test db                       # esegue i test pgTAP in supabase/tests
-supabase db diff -f <slug>             # genera una migration dalle modifiche fatte in Studio
+supabase migration new <slug>          # creates supabase/migrations/<ts>_<slug>.sql
+supabase db reset                      # recreates the local DB: migrations + seed
+supabase test db                       # runs the pgTAP tests in supabase/tests
+supabase db diff -f <slug>             # generates a migration from changes made in Studio
 supabase gen types typescript --local > web/shared/types/database.types.ts
-supabase functions serve <name>        # Edge Function in locale
-supabase db push                       # applica le migration al progetto remoto (solo dopo il merge)
+supabase functions serve <name>        # Edge Function locally
+supabase db push                       # applies migrations to the remote project (only after merge)
 ```
 
-## Template di migration
+## Migration template
 ```sql
 -- <ts>_collection.sql
 create table public.collection (
@@ -43,7 +43,7 @@ create index collection_user_set_idx on public.collection (user_id, set_id);
 
 alter table public.collection enable row level security;
 
--- Una policy per operazione: più leggibile e più facile da testare
+-- One policy per operation: more readable and easier to test
 create policy "collection_select_own" on public.collection
   for select to authenticated using ((select auth.uid()) = user_id);
 create policy "collection_insert_own" on public.collection
@@ -54,7 +54,7 @@ create policy "collection_update_own" on public.collection
 create policy "collection_delete_own" on public.collection
   for delete to authenticated using ((select auth.uid()) = user_id);
 
--- updated_at automatico
+-- automatic updated_at
 create or replace function public.set_updated_at() returns trigger
 language plpgsql set search_path = '' as $$
 begin new.updated_at = now(); return new; end $$;
@@ -63,23 +63,23 @@ create trigger collection_set_updated_at before update on public.collection
   for each row execute function public.set_updated_at();
 ```
 
-## Best practice
-- `(select auth.uid())` va scritto tra parentesi nelle policy: Postgres lo valuta una volta per query e non una per riga.
-- Indicizza le colonne usate nelle policy e nei filtri (`user_id`, `set_id`).
-- Le funzioni hanno `set search_path = ''` e usano nomi qualificati (`public.x`). `security definer` solo se serve davvero, motivato nell'intent.
-- Usa i vincoli (`check`, `unique`, `not null`) per l'integrità dei dati, non la validazione client.
-- Le operazioni del tipo "aggiungi o incrementa" si fanno con `upsert` sulla unique key (`onConflict: 'user_id,card_id,lang,variant'`).
-- Una migration già mergiata non si modifica più: si crea una nuova migration.
-- Migration distruttive (drop, rename, cambi di tipo) vanno dichiarate nella sezione "Rischi" dell'intent.
+## Best practices
+- `(select auth.uid())` must be wrapped in parentheses in policies: Postgres evaluates it once per query and not once per row.
+- Index the columns used in policies and filters (`user_id`, `set_id`).
+- Functions have `set search_path = ''` and use qualified names (`public.x`). `security definer` only when really needed, justified in the intent.
+- Use constraints (`check`, `unique`, `not null`) for data integrity, not client-side validation.
+- "Add or increment" operations are done with `upsert` on the unique key (`onConflict: 'user_id,card_id,lang,variant'`).
+- An already merged migration is never modified again: create a new migration.
+- Destructive migrations (drop, rename, type changes) must be declared in the "Risks" section of the intent.
 
-## Test pgTAP (obbligatori per ogni tabella o policy nuova)
+## pgTAP tests (mandatory for every new table or policy)
 ```sql
 -- supabase/tests/collection_rls.test.sql
 begin;
 create extension if not exists pgtap with schema extensions;
 select plan(3);
 
--- utenti fittizi
+-- fake users
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@test.dev'),
   ('00000000-0000-0000-0000-00000000000b', 'b@test.dev');
@@ -90,28 +90,28 @@ values ('00000000-0000-0000-0000-00000000000a', 'swsh3-136', 'swsh3');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000b"}';
 
-select is((select count(*) from public.collection)::int, 0, 'B non vede le carte di A');
+select is((select count(*) from public.collection)::int, 0, 'B cannot see A''s cards');
 select throws_ok(
   $$ insert into public.collection (user_id, card_id, set_id)
      values ('00000000-0000-0000-0000-00000000000a', 'x-1', 'x') $$,
-  '42501', null, 'B non può inserire per conto di A');
+  '42501', null, 'B cannot insert on behalf of A');
 
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000000a"}';
-select is((select count(*) from public.collection)::int, 1, 'A vede la propria carta');
+select is((select count(*) from public.collection)::int, 1, 'A sees their own card');
 
 select * from finish();
 rollback;
 ```
 
 ## Edge Functions (Deno/TypeScript)
-- Una funzione per cartella: `supabase/functions/<name>/index.ts`; il codice condiviso va in `supabase/functions/_shared/`.
-- Valida l'input (per esempio con zod) e rispondi sempre in JSON con status corretti.
-- Se agisce per conto dell'utente, crea il client con l'header `Authorization` della richiesta, così la RLS resta attiva. Il service role si usa solo per job di sistema (per esempio un cron di cache prezzi).
-- Segreti con `supabase secrets set`, mai nel codice.
+- One function per folder: `supabase/functions/<name>/index.ts`; shared code goes in `supabase/functions/_shared/`.
+- Validate the input (for example with zod) and always respond in JSON with correct statuses.
+- If acting on behalf of the user, create the client with the request's `Authorization` header, so RLS stays active. The service role is used only for system jobs (for example a price cache cron).
+- Secrets via `supabase secrets set`, never in code.
 
 ## Checklist
-- [ ] Migration creata con la CLI, `db reset` pulito
-- [ ] RLS attiva e una policy per ogni operazione necessaria
-- [ ] Test pgTAP per accesso consentito e negato
-- [ ] Tipi TS rigenerati e committati
-- [ ] Modello Dart aggiornato su mobile (se cambia lo schema)
+- [ ] Migration created with the CLI, clean `db reset`
+- [ ] RLS enabled and one policy for each required operation
+- [ ] pgTAP tests for allowed and denied access
+- [ ] TS types regenerated and committed
+- [ ] Dart model updated on mobile (if the schema changes)
